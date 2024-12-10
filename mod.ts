@@ -138,16 +138,17 @@ class Server {
 
   async startServer() {
     this.listener = Deno.listen({ port });
-
     this.log(`Server Started on port ${port}`);
+    let index = 0;
     try {
       for await (const connection of this.listener) {
         try {
-          const client = new Client(connection, this);
+          const client = new Client(index, connection, this);
           this.clients.push(client);
         } catch (error) {
           this.log(`Error connecting client: ${error.message}`);
         }
+        index += 1;
       }
     } catch (error) {
       this.log(`Error starting server: ${error.message}`);
@@ -191,10 +192,10 @@ class Client {
   public server: Server;
   public room?: Room;
 
-  constructor(connection: Deno.Conn, server: Server) {
+  constructor(id: number, connection: Deno.Conn, server: Server) {
+    this.id = id;
     this.connection = connection;
     this.server = server;
-    this.id = connection.rid;
 
     // SHA256 to get a rough idea of how many unique players there are
     crypto.subtle.digest(
